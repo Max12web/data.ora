@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orologio Sirena, Calendario e Calcolatore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex;
+            align-items: flex;
+            height: 160vh;
+            margin: 0;
+            background-color: black;
+            color: white;
+        }
+        #top-section {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        #calendar {
+            text-align: center;
+            font-size: 1em;
+        }
+        #calendar table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        #calendar th, #calendar td {
+            border: 1px solid #fff;
+            padding: 5px;
+            text-align: center;
+        }
+        .today {
+            background-color: yellow;
+            font-weight: bold;
+            color: black;
+        }
+        #clock {
+            font-size: 180px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        #analog-clock {
+            width: 250px;
+            height: 250px;
+            border: 6px solid white;
+            border-radius: 50%;
+            position: relative;
+            margin-right: 100px;
+        }
+        .hand {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            transform-origin: bottom;
+            background-color: white;
+        }
+        #hour-hand {
+            width: 8px;
+            height: 70px;
+        }
+        #minute-hand {
+            width: 6px;
+            height: 100px;
+        }
+        #second-hand {
+            width: 4px;
+            height: 120px;
+            background-color: red;
+        }
+             
+                /* Lampeggio dello sfondo per la sveglia */
+        .flashing {
+            animation: flashBackground 1s infinite;
+        }
+        @keyframes flashBackground {
+            0%, 100% {
+                background-color: black;
+            }
+            50% {
+                background-color: red;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="top-section">
+        <!-- Orologio analogico -->
+        <div id="analog-clock">
+            <div id="hour-hand" class="hand"></div>
+            <div id="minute-hand" class="hand"></div>
+            <div id="second-hand" class="hand"></div>
+        </div>
+        
+        <!-- Calendario -->
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Orologio digitale -->
+    <div id="clock"></div>
+
+        
+    <audio id="alarm-sound" src="military-alarm.mp3" preload="auto"></audio>
+
+        <script>
+       
+        // Funzione per aggiornare l'ora
+        function showTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('clock').textContent = timeString;
+
+            // Aggiorna l'orologio analogico
+            const secondHand = document.getElementById('second-hand');
+            const minuteHand = document.getElementById('minute-hand');
+            const hourHand = document.getElementById('hour-hand');
+            secondHand.style.transform = `rotate(${now.getSeconds() * 6}deg)`;
+            minuteHand.style.transform = `rotate(${now.getMinutes() * 6}deg)`;
+            hourHand.style.transform = `rotate(${(now.getHours() % 12) * 30 + now.getMinutes() * 0.5}deg)`;
+
+            // Controllo sveglia
+            if ((hours === '12' || hours === '17') && minutes === '00' && seconds === '00') {
+                triggerAlarm();
+            }
+        }
+
+        // Funzione per far partire la sveglia
+        function triggerAlarm() {
+            const body = document.body;
+            const alarmSound = document.getElementById('alarm-sound');
+            body.classList.add('flashing');
+            alarmSound.play();
+            setTimeout(() => {
+                body.classList.remove('flashing');
+            }, 30000);
+        }
+
+        // Funzione per creare il calendario
+        function generateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+
+            let calendarHTML = `<h2>${monthNames[month]} ${year}</h2>`;
+            calendarHTML += '<table><tr>';
+            const dayNames = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+            dayNames.forEach(day => {
+                calendarHTML += `<th>${day}</th>`;
+            });
+            calendarHTML += '</tr><tr>';
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const firstDayCorrected = firstDay === 0 ? 7 : firstDay;
+
+            for (let i = 1; i < firstDayCorrected; i++) {
+                calendarHTML += '<td></td>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                if (day === today) {
+                    calendarHTML += `<td class="today">${day}</td>`;
+                } else {
+                    calendarHTML += `<td>${day}</td>`;
+                }
+
+                if ((day + firstDayCorrected - 1) % 7 === 0 && day !== daysInMonth) {
+                    calendarHTML += '</tr><tr>';
+                }
+            }
+
+            calendarHTML += '</tr></table>';
+            document.getElementById('calendar').innerHTML = calendarHTML;
+        }
+
+        // Funzione per aggiornare il calendario ogni giorno
+        function updateCalendar() {
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const timeUntilMidnight = midnight - now;
+
+            setTimeout(() => {
+                generateCalendar();
+                updateCalendar(); // Aggiorna il calendario ogni giorno
+            }, timeUntilMidnight);
+        }
+
+        
+        // Funzione per gestire la tastiera
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            if (!isNaN(key)) {
+                appendNumber(key);
+            } else if (key === '+') {
+                setOperation('+');
+            } else if (key === '-') {
+                setOperation('-');
+            } else if (key === '*') {
+                setOperation('*');
+            } else if (key === '/') {
+                setOperation('/');
+            } else if (key === 'Enter') {
+                calculateResult();
+            } else if (key === 'Escape') {
+                clearDisplay();
+            }
+        });
+
+        // Inizializzazione
+        window.onload = function () {
+            showTime();
+            generateCalendar();
+            updateCalendar();
+            setInterval(showTime, 1000); // Aggiorna l'orologio ogni secondo
+        };
+
+</script>
+<div style="text-align: center;">
+<a href="https://max12web.github.io/Calcolatore/">
+<img src="iconacarta.png" alt="Calcolatore inox" style="width:100px;height:100px." hspace="50"/></a>
+<a href="https://max12web.github.io/Calcolatore.inox/">
+<img src="iconainox.png" alt="Calcolatore inox" style="width:100px;height:100px." hspace="50"/></a></div>
+
+
+</body>
+</html>
