@@ -131,7 +131,7 @@
             hourHand.style.transform = `rotate(${(now.getHours() % 12) * 30 + now.getMinutes() * 0.5}deg)`;
 
             // Controllo sveglia
-            if ((hours === '12' || hours === '17') && minutes === '00' && seconds === '00') {
+            if ((hours === '08' || hours === '12' || hours === '13' || hours === '17' ) && minutes === '00' && seconds === '00') {
                 triggerAlarm();
             }
         }
